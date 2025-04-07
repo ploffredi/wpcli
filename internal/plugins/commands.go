@@ -12,16 +12,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// PluginCommand represents a command that can be executed by a plugin
-type PluginCommand struct {
-	Name        string
-	Description string
-	WasmFile    string
-	ConfigFile  string
-	Version     string
-	Subcommand  string
-}
-
 // GetPluginCommands returns a list of commands available from the plugins
 func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 	config := &PluginConfig{}
@@ -199,13 +189,8 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 
 			// Add the command to the appropriate parent
 			if parentCmd != nil {
-				// Add command directly to the parent command
-				cmd.Short = fmt.Sprintf("%s (from %s v%s)", cmd.Short, plugin.Name, latestVersion.Version)
 				parentCmd.AddCommand(cmd)
 			} else {
-				// For root-level commands, add version info to the description
-				cmd.Short = fmt.Sprintf("%s (from %s v%s)", cmd.Short, plugin.Name, latestVersion.Version)
-				cmd.Long = fmt.Sprintf("%s\n\nPlugin: %s\nVersion: %s", cmd.Long, plugin.Name, latestVersion.Version)
 				rootCommands = append(rootCommands, cmd)
 			}
 		}

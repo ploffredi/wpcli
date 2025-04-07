@@ -108,6 +108,11 @@ type PluginCommandConfig struct {
 		Required    bool        `yaml:"required"`
 	} `yaml:"args"`
 	Flags []*flags.Flag `yaml:"flags"`
+	// Additional fields from PluginCommand
+	WasmFile   string `yaml:"wasm_file,omitempty"`
+	ConfigFile string `yaml:"config_file,omitempty"`
+	Version    string `yaml:"version,omitempty"`
+	Subcommand string `yaml:"subcommand,omitempty"`
 }
 
 // PluginYAMLConfig represents the structure of a plugin's YAML configuration file
