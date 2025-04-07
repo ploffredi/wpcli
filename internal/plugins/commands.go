@@ -100,9 +100,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 
 			// Build usage pattern with arguments
 			usage := cmdConfigCopy.Usage
-			if strings.HasPrefix(usage, "wpcli ") {
-				usage = usage[6:] // Remove "wpcli " prefix
-			}
+			usage = strings.TrimPrefix(usage, "wpcli ")
 
 			description := cmdConfigCopy.Description["en"]
 			if description == "" {
