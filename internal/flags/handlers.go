@@ -117,10 +117,23 @@ func (h *IntFlagHandler) ValidateValue(flag *Flag, value string) error {
 		return fmt.Errorf("invalid integer value for flag %s: %s", flag.Name, value)
 	}
 
-	if !flag.IsValidValue(value) {
-		return fmt.Errorf("invalid value for flag %s: %d. Valid values are: %s",
-			flag.Name, intValue, strings.Join(flag.ValidValues, ", "))
+	// If there are valid values, validate against them
+	if len(flag.ValidValues) > 0 {
+		validValuesMap := make(map[int]bool)
+		for _, v := range flag.ValidValues {
+			var intValidValue int
+			if _, err := fmt.Sscanf(v, "%d", &intValidValue); err != nil {
+				return fmt.Errorf("invalid valid value for int flag %s: %s", flag.Name, v)
+			}
+			validValuesMap[intValidValue] = true
+		}
+
+		if !validValuesMap[intValue] {
+			return fmt.Errorf("invalid value for flag %s: %d. Valid values are: %s",
+				flag.Name, intValue, strings.Join(flag.ValidValues, ", "))
+		}
 	}
+
 	return nil
 }
 
@@ -158,19 +171,16 @@ func (h *EnumFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 }
 
 func (h *EnumFlagHandler) ValidateValue(flag *Flag, value string) error {
-	// Only validate if valid values are defined
-	if len(flag.ValidValues) > 0 {
-		// If value is empty and there's a default value, use that for validation
-		if value == "" && flag.Default != "" {
-			value = flag.Default
-		}
+	// If value is empty and there's a default value, use that for validation
+	if value == "" && flag.Default != "" {
+		value = flag.Default
+	}
 
-		// Check if the value is in the list of valid values
-		validValuesMap := flag.GetValidValues()
-		if !validValuesMap[value] {
-			return fmt.Errorf("invalid value for flag %s: %s. Valid values are: %s",
-				flag.Name, value, strings.Join(flag.ValidValues, ", "))
-		}
+	// Always validate against valid values for enum flags
+	validValuesMap := flag.GetValidValues()
+	if !validValuesMap[value] {
+		return fmt.Errorf("invalid value for flag %s: %s. Valid values are: %s",
+			flag.Name, value, strings.Join(flag.ValidValues, ", "))
 	}
 
 	return nil
