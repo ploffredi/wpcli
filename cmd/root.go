@@ -13,8 +13,8 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "wpcli",
-	Short: "WPStore CLI - A command line interface for managing WordPress plugins",
-	Long: `WPStore CLI is a command line interface for managing WordPress plugins.
+	Short: "WPStore CLI - A command line interface for managing WebAssembly plugins",
+	Long: `WPStore CLI is a command line interface for managing WebAssembly plugins.
 It provides functionality to interact with the wpstore git repository and manage plugins.yml.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// If no arguments are provided, show help

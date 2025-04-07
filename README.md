@@ -1,6 +1,6 @@
 # WPStore CLI
 
-A command line interface for managing WordPress plugins from the wpstore repository.
+A command line interface for managing WebAssembly plugins from the wpstore repository.
 
 ## Installation
 
