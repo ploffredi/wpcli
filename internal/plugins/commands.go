@@ -135,8 +135,6 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 								return fmt.Errorf("failed to get value for flag %s: %w", flag.Name, err)
 							}
 
-							fmt.Printf("Debug: Flag %s (type: %s) has value: %s, valid values: %v\n", flag.Name, flag.Type, value, flag.ValidValues)
-
 							if err := handler.ValidateValue(flag, value); err != nil {
 								return err
 							}

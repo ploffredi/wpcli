@@ -4,34 +4,24 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ploffredi/wpcli/internal/flags"
 	"github.com/spf13/cobra"
 )
 
 // FlagHandler defines the interface for handling different flag types
 type FlagHandler interface {
 	// AddFlag adds a flag to the command
-	AddFlag(cmd *cobra.Command, flag *Flag) error
+	AddFlag(cmd *cobra.Command, flag *flags.Flag) error
 	// ValidateValue validates the flag value
-	ValidateValue(flag *Flag, value string) error
+	ValidateValue(flag *flags.Flag, value string) error
 	// GetValue gets the flag value from the command
 	GetValue(cmd *cobra.Command, flagName string) (string, error)
-}
-
-// Flag represents a command flag with its configuration
-type Flag struct {
-	Name        string
-	Shorthand   string
-	Type        string
-	Description map[string]string `yaml:"description"`
-	Required    bool              `yaml:"required"`
-	Default     string            `yaml:"default,omitempty"`
-	ValidValues []string          `yaml:"valid_values,omitempty"`
 }
 
 // StringFlagHandler handles string flags
 type StringFlagHandler struct{}
 
-func (h *StringFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
+func (h *StringFlagHandler) AddFlag(cmd *cobra.Command, flag *flags.Flag) error {
 	flagName := flag.Name
 	if len(flagName) > 2 && flagName[:2] == "--" {
 		flagName = flagName[2:]
@@ -66,7 +56,7 @@ func (h *StringFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	return nil
 }
 
-func (h *StringFlagHandler) ValidateValue(flag *Flag, value string) error {
+func (h *StringFlagHandler) ValidateValue(flag *flags.Flag, value string) error {
 	if len(flag.ValidValues) > 0 {
 		// If value is empty and there's a default value, use that for validation
 		if value == "" && flag.Default != "" {
@@ -94,7 +84,7 @@ func (h *StringFlagHandler) GetValue(cmd *cobra.Command, flagName string) (strin
 // BoolFlagHandler handles boolean flags
 type BoolFlagHandler struct{}
 
-func (h *BoolFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
+func (h *BoolFlagHandler) AddFlag(cmd *cobra.Command, flag *flags.Flag) error {
 	flagName := flag.Name
 	if len(flagName) > 2 && flagName[:2] == "--" {
 		flagName = flagName[2:]
@@ -129,7 +119,7 @@ func (h *BoolFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	return nil
 }
 
-func (h *BoolFlagHandler) ValidateValue(flag *Flag, value string) error {
+func (h *BoolFlagHandler) ValidateValue(flag *flags.Flag, value string) error {
 	if len(flag.ValidValues) > 0 {
 		// If value is empty and there's a default value, use that for validation
 		if value == "" && flag.Default != "" {
@@ -157,7 +147,7 @@ func (h *BoolFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string,
 // IntFlagHandler handles integer flags
 type IntFlagHandler struct{}
 
-func (h *IntFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
+func (h *IntFlagHandler) AddFlag(cmd *cobra.Command, flag *flags.Flag) error {
 	flagName := flag.Name
 	if len(flagName) > 2 && flagName[:2] == "--" {
 		flagName = flagName[2:]
@@ -198,7 +188,7 @@ func (h *IntFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	return nil
 }
 
-func (h *IntFlagHandler) ValidateValue(flag *Flag, value string) error {
+func (h *IntFlagHandler) ValidateValue(flag *flags.Flag, value string) error {
 	if len(flag.ValidValues) > 0 {
 		// If value is empty and there's a default value, use that for validation
 		if value == "" && flag.Default != "" {
@@ -235,7 +225,7 @@ func (h *IntFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string, 
 // EnumFlagHandler handles enum flags (flags with valid_values)
 type EnumFlagHandler struct{}
 
-func (h *EnumFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
+func (h *EnumFlagHandler) AddFlag(cmd *cobra.Command, flag *flags.Flag) error {
 	flagName := flag.Name
 	if len(flagName) > 2 && flagName[:2] == "--" {
 		flagName = flagName[2:]
@@ -270,7 +260,7 @@ func (h *EnumFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	return nil
 }
 
-func (h *EnumFlagHandler) ValidateValue(flag *Flag, value string) error {
+func (h *EnumFlagHandler) ValidateValue(flag *flags.Flag, value string) error {
 	// If value is empty and there's a default value, use that for validation
 	if value == "" && flag.Default != "" {
 		value = flag.Default
@@ -295,7 +285,7 @@ func (h *EnumFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string,
 }
 
 // validateFlagValue validates a flag value against its valid values
-func validateFlagValue(flag *Flag, value string) error {
+func validateFlagValue(flag *flags.Flag, value string) error {
 	if len(flag.ValidValues) == 0 {
 		return nil
 	}
@@ -326,7 +316,7 @@ var FlagHandlers = map[string]FlagHandler{
 }
 
 // GetFlagHandler returns the appropriate handler for a flag type
-func GetFlagHandler(flagType string, flag *Flag) (FlagHandler, error) {
+func GetFlagHandler(flagType string, flag *flags.Flag) (FlagHandler, error) {
 	// If the flag has valid values, treat it as an enum regardless of its type
 	if len(flag.ValidValues) > 0 {
 		return FlagHandlers["enum"], nil

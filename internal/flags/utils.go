@@ -28,13 +28,17 @@ func ValidateFlags(cmd *cobra.Command, flags []*Flag) error {
 	for _, flag := range flags {
 		handler := GetHandler(flag.Type, flag)
 		flagName := NormalizeFlagName(flag.Name)
-		value, err := handler.GetValue(cmd, flagName)
-		if err != nil {
-			return fmt.Errorf("failed to get value for flag %s: %w", flag.Name, err)
-		}
 
-		if err := handler.ValidateValue(flag, value); err != nil {
-			return err
+		// Only validate if the flag was set
+		if cmd.Flags().Changed(flagName) {
+			value, err := handler.GetValue(cmd, flagName)
+			if err != nil {
+				return fmt.Errorf("failed to get value for flag %s: %w", flag.Name, err)
+			}
+
+			if err := handler.ValidateValue(flag, value); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

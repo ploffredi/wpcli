@@ -22,10 +22,10 @@ type Flag struct {
 	Name        string
 	Shorthand   string
 	Type        FlagType
-	Description map[string]string
-	Required    bool
-	Default     string
-	ValidValues []string `yaml:"valid_values"`
+	Description map[string]string `yaml:"description"`
+	Required    bool              `yaml:"required"`
+	Default     string            `yaml:"default,omitempty"`
+	ValidValues []string          `yaml:"valid_values,omitempty"`
 }
 
 // FlagHandler defines the interface for handling different flag types

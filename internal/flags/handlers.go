@@ -164,6 +164,7 @@ func (h *EnumFlagHandler) ValidateValue(flag *Flag, value string) error {
 		if value == "" && flag.Default != "" {
 			value = flag.Default
 		}
+
 		// Check if the value is in the list of valid values
 		validValuesMap := flag.GetValidValues()
 		if !validValuesMap[value] {
