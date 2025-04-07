@@ -49,7 +49,7 @@ var listCmd = &cobra.Command{
 		fmt.Println("-----------------")
 		for _, plugin := range plugins {
 			fmt.Printf("Name: %s\n", plugin.Name)
-			fmt.Printf("Description: %s\n", plugin.Description.EN)
+			fmt.Printf("Description: %s\n", plugin.Description["en"])
 			fmt.Printf("Latest Version: %s\n", plugin.Versions[0].Version)
 			fmt.Printf("UUID: %s\n", plugin.UUID)
 			fmt.Println("-----------------")

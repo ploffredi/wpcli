@@ -8,11 +8,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Description struct {
-	IT string `yaml:"it"`
-	EN string `yaml:"en"`
-	ES string `yaml:"es"`
-}
+// Description represents a multilingual description using a map of language codes to strings
+type Description map[string]string
 
 type Version struct {
 	Version string `yaml:"version"`
@@ -93,4 +90,30 @@ func (cm *ConfigManager) GetSettings() *Settings {
 		return nil
 	}
 	return &cm.config.Settings
+}
+
+// PluginCommandConfig represents the configuration for a plugin command
+type PluginCommandConfig struct {
+	Name        string      `yaml:"name"`
+	Description Description `yaml:"description"`
+	Usage       string      `yaml:"usage"`
+	Examples    []struct {
+		Command string `yaml:"command"`
+	} `yaml:"examples"`
+	Args []struct {
+		Name        string      `yaml:"name"`
+		Type        string      `yaml:"type"`
+		Description Description `yaml:"description"`
+		Required    bool        `yaml:"required"`
+	} `yaml:"args"`
+	Flags []Flag `yaml:"flags"`
+}
+
+// PluginYAMLConfig represents the structure of a plugin's YAML configuration file
+type PluginYAMLConfig struct {
+	Name        string                 `yaml:"name"`
+	Version     string                 `yaml:"version"`
+	Description Description            `yaml:"description"`
+	Commands    []PluginCommandConfig  `yaml:"commands"`
+	Metadata    map[string]interface{} `yaml:"metadata,omitempty"` // For plugin-specific data
 }

@@ -22,44 +22,6 @@ type PluginCommand struct {
 	Subcommand  string
 }
 
-// PluginCommandConfig represents the command configuration in the plugin's YAML file
-type PluginCommandConfig struct {
-	Name        string `yaml:"name"`
-	Description struct {
-		IT string `yaml:"it"`
-		EN string `yaml:"en"`
-		ES string `yaml:"es"`
-	} `yaml:"description"`
-	Usage    string `yaml:"usage"`
-	Examples []struct {
-		Command string `yaml:"command"`
-	} `yaml:"examples"`
-	Args []struct {
-		Name        string `yaml:"name"`
-		Type        string `yaml:"type"`
-		Description struct {
-			IT string `yaml:"it"`
-			EN string `yaml:"en"`
-			ES string `yaml:"es"`
-		} `yaml:"description"`
-		Required bool `yaml:"required"`
-	} `yaml:"args"`
-	Flags []Flag `yaml:"flags"`
-}
-
-// PluginYAMLConfig represents the structure of a plugin's YAML configuration file
-type PluginYAMLConfig struct {
-	Name        string `yaml:"name"`
-	Version     string `yaml:"version"`
-	Description struct {
-		IT string `yaml:"it"`
-		EN string `yaml:"en"`
-		ES string `yaml:"es"`
-	} `yaml:"description"`
-	Commands []PluginCommandConfig  `yaml:"commands"`
-	Metadata map[string]interface{} `yaml:"metadata,omitempty"` // For plugin-specific data
-}
-
 // GetPluginCommands returns a list of commands available from the plugins
 func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 	config := &PluginConfig{}
@@ -142,10 +104,15 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 				usage = usage[6:] // Remove "wpcli " prefix
 			}
 
+			description := cmdConfigCopy.Description["en"]
+			if description == "" {
+				description = cmdConfigCopy.Description["default"]
+			}
+
 			cmd := &cobra.Command{
 				Use:   usage,
-				Short: cmdConfigCopy.Description.EN,
-				Long:  cmdConfigCopy.Description.EN,
+				Short: description,
+				Long:  description,
 				Args: func(cmd *cobra.Command, args []string) error {
 					// Validate arguments
 					if len(args) < requiredArgs {
@@ -168,7 +135,11 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 			// Add arguments
 			for _, arg := range cmdConfigCopy.Args {
 				cmd.Use = strings.ReplaceAll(cmd.Use, "<"+arg.Name+">", fmt.Sprintf("<%s>", arg.Name))
-				cmd.Long = fmt.Sprintf("%s\n\nArguments:\n  %s (%s) - %s", cmd.Long, arg.Name, arg.Type, arg.Description.EN)
+				argDesc := arg.Description["en"]
+				if argDesc == "" {
+					argDesc = arg.Description["default"]
+				}
+				cmd.Long = fmt.Sprintf("%s\n\nArguments:\n  %s (%s) - %s", cmd.Long, arg.Name, arg.Type, argDesc)
 			}
 
 			// Add examples
@@ -255,14 +226,15 @@ func validateFlags(cmd *cobra.Command, flags []Flag) error {
 
 // buildCommandSummary builds a string representation of the command with its arguments and flags
 func buildCommandSummary(cmdName string, args []string, cmd *cobra.Command) string {
-	cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
-	// Add flags
-	cmd.Flags().Visit(func(f *pflag.Flag) {
-		if f.Value.Type() == "bool" {
-			cmdStr += fmt.Sprintf(" --%s", f.Name)
-		} else {
-			cmdStr += fmt.Sprintf(" --%s=%s", f.Name, f.Value.String())
+	var parts []string
+	parts = append(parts, cmdName)
+	parts = append(parts, args...)
+
+	cmd.Flags().Visit(func(flag *pflag.Flag) {
+		if flag.Changed {
+			parts = append(parts, fmt.Sprintf("--%s=%v", flag.Name, flag.Value))
 		}
 	})
-	return cmdStr
+
+	return strings.Join(parts, " ")
 }

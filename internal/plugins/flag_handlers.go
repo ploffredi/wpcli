@@ -22,14 +22,10 @@ type Flag struct {
 	Name        string
 	Shorthand   string
 	Type        string
-	Description struct {
-		IT string `yaml:"it"`
-		EN string `yaml:"en"`
-		ES string `yaml:"es"`
-	} `yaml:"description"`
-	Required    bool     `yaml:"required"`
-	Default     string   `yaml:"default,omitempty"`
-	ValidValues []string `yaml:"valid_values,omitempty"`
+	Description map[string]string `yaml:"description"`
+	Required    bool              `yaml:"required"`
+	Default     string            `yaml:"default,omitempty"`
+	ValidValues []string          `yaml:"valid_values,omitempty"`
 }
 
 // StringFlagHandler handles string flags
@@ -50,10 +46,15 @@ func (h *StringFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	}
 
 	defaultValue := flag.Default
+	description := flag.Description["en"]
+	if description == "" {
+		description = flag.Description["default"]
+	}
+
 	if shorthand != "" {
-		cmd.Flags().StringP(flagName, shorthand, defaultValue, flag.Description.EN)
+		cmd.Flags().StringP(flagName, shorthand, defaultValue, description)
 	} else {
-		cmd.Flags().String(flagName, defaultValue, flag.Description.EN)
+		cmd.Flags().String(flagName, defaultValue, description)
 	}
 
 	if flag.Required {
@@ -108,10 +109,15 @@ func (h *BoolFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	}
 
 	defaultValue := flag.Default == "true"
+	description := flag.Description["en"]
+	if description == "" {
+		description = flag.Description["default"]
+	}
+
 	if shorthand != "" {
-		cmd.Flags().BoolP(flagName, shorthand, defaultValue, flag.Description.EN)
+		cmd.Flags().BoolP(flagName, shorthand, defaultValue, description)
 	} else {
-		cmd.Flags().Bool(flagName, defaultValue, flag.Description.EN)
+		cmd.Flags().Bool(flagName, defaultValue, description)
 	}
 
 	if flag.Required {
@@ -172,10 +178,15 @@ func (h *IntFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 		}
 	}
 
+	description := flag.Description["en"]
+	if description == "" {
+		description = flag.Description["default"]
+	}
+
 	if shorthand != "" {
-		cmd.Flags().IntP(flagName, shorthand, defaultValue, flag.Description.EN)
+		cmd.Flags().IntP(flagName, shorthand, defaultValue, description)
 	} else {
-		cmd.Flags().Int(flagName, defaultValue, flag.Description.EN)
+		cmd.Flags().Int(flagName, defaultValue, description)
 	}
 
 	if flag.Required {
@@ -239,10 +250,15 @@ func (h *EnumFlagHandler) AddFlag(cmd *cobra.Command, flag *Flag) error {
 	}
 
 	defaultValue := flag.Default
+	description := flag.Description["en"]
+	if description == "" {
+		description = flag.Description["default"]
+	}
+
 	if shorthand != "" {
-		cmd.Flags().StringP(flagName, shorthand, defaultValue, flag.Description.EN)
+		cmd.Flags().StringP(flagName, shorthand, defaultValue, description)
 	} else {
-		cmd.Flags().String(flagName, defaultValue, flag.Description.EN)
+		cmd.Flags().String(flagName, defaultValue, description)
 	}
 
 	if flag.Required {
