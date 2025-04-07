@@ -19,11 +19,14 @@ type Version struct {
 }
 
 type Plugin struct {
-	Name        string      `yaml:"name"`
-	Description Description `yaml:"description"`
-	UUID        string      `yaml:"uuid"`
-	Versions    []Version   `yaml:"versions"`
-	Subcommand  string      `yaml:"subcommand,omitempty"`
+	Name        string                 `yaml:"name"`
+	Description Description            `yaml:"description"`
+	UUID        string                 `yaml:"uuid"`
+	Versions    []Version              `yaml:"versions"`
+	Subcommand  string                 `yaml:"subcommand,omitempty"`
+	Version     string                 `yaml:"version,omitempty"`
+	Commands    []PluginCommandConfig  `yaml:"commands,omitempty"`
+	Metadata    map[string]interface{} `yaml:"metadata,omitempty"` // For plugin-specific data
 }
 
 type Settings struct {
@@ -115,11 +118,17 @@ type PluginCommandConfig struct {
 	Subcommand string `yaml:"subcommand,omitempty"`
 }
 
-// PluginYAMLConfig represents the structure of a plugin's YAML configuration file
-type PluginYAMLConfig struct {
-	Name        string                 `yaml:"name"`
-	Version     string                 `yaml:"version"`
-	Description Description            `yaml:"description"`
-	Commands    []PluginCommandConfig  `yaml:"commands"`
-	Metadata    map[string]interface{} `yaml:"metadata,omitempty"` // For plugin-specific data
+// loadPluginConfig loads a plugin's YAML configuration file
+func loadPluginConfig(configPath string) (*Plugin, error) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read plugin config: %w", err)
+	}
+
+	config := &Plugin{}
+	if err := yaml.Unmarshal(data, config); err != nil {
+		return nil, fmt.Errorf("failed to parse plugin config: %w", err)
+	}
+
+	return config, nil
 }

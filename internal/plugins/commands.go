@@ -199,20 +199,6 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 	return rootCommands, nil
 }
 
-func loadPluginConfig(configPath string) (*PluginYAMLConfig, error) {
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read plugin config: %w", err)
-	}
-
-	config := &PluginYAMLConfig{}
-	if err := yaml.Unmarshal(data, config); err != nil {
-		return nil, fmt.Errorf("failed to parse plugin config: %w", err)
-	}
-
-	return config, nil
-}
-
 // Add this function to handle invalid subcommands
 func init() {
 	// Override the default behavior for invalid subcommands
