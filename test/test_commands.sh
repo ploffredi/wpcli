@@ -79,7 +79,7 @@ run_test "Print a formal greeting in Spanish" "$WPCLI greet --language es --form
 run_test "Print a formal greeting with a name in Italian" "$WPCLI greet Maria --language it --formal"
 
 # Test greet command - Error cases
-run_test "Greet with invalid language" "$WPCLI greet --language invalid" 0
+run_test "Greet with invalid language" "$WPCLI greet --language invalid" 1
 run_test "Greet with invalid flag" "$WPCLI greet --invalid-flag" 1
 
 # Test help commands

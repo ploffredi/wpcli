@@ -53,8 +53,9 @@ type PluginCommandConfig struct {
 			EN string `yaml:"en"`
 			ES string `yaml:"es"`
 		} `yaml:"description"`
-		Required bool   `yaml:"required"`
-		Default  string `yaml:"default,omitempty"`
+		Required    bool     `yaml:"required"`
+		Default     string   `yaml:"default,omitempty"`
+		ValidValues []string `yaml:"valid_values,omitempty"`
 	} `yaml:"flags"`
 }
 
@@ -222,17 +223,30 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 						cmd.Flags().String(flagName, defaultValue, flag.Description.EN)
 					}
 
-					// Add validation for specific flags
-					if cmd.Name() == "list" && flagName == "format" {
+					// Add validation for flags with valid_values
+					if len(flag.ValidValues) > 0 {
+						// Get the existing PreRunE function if it exists
+						existingPreRunE := cmd.PreRunE
+
+						// Create a map of valid values for quick lookup
+						validValuesMap := make(map[string]bool)
+						for _, value := range flag.ValidValues {
+							validValuesMap[value] = true
+						}
+
 						cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-							format, _ := cmd.Flags().GetString("format")
-							validFormats := map[string]bool{
-								"json":  true,
-								"yaml":  true,
-								"table": true,
+							// Call the existing PreRunE function if it exists
+							if existingPreRunE != nil {
+								if err := existingPreRunE(cmd, args); err != nil {
+									return err
+								}
 							}
-							if !validFormats[format] {
-								return fmt.Errorf("invalid format: %s. Valid formats are: json, yaml, table", format)
+
+							// Validate the flag value
+							value, _ := cmd.Flags().GetString(flagName)
+							if !validValuesMap[value] {
+								return fmt.Errorf("invalid %s: %s. Valid values are: %s",
+									flagName, value, strings.Join(flag.ValidValues, ", "))
 							}
 							return nil
 						}
