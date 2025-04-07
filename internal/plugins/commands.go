@@ -137,8 +137,23 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 				}
 			}
 
+			// Extract command name from usage pattern
+			parts := strings.Fields(cmdConfigCopy.Usage)
+			var cmdName string
+			if len(parts) > 0 {
+				cmdName = cmdConfigCopy.Name // Use the name from the config
+			} else {
+				cmdName = cmdConfigCopy.Name
+			}
+
+			// Build usage pattern with arguments
+			usage := cmdConfigCopy.Usage
+			if strings.HasPrefix(usage, "wpcli ") {
+				usage = usage[6:] // Remove "wpcli " prefix
+			}
+
 			cmd := &cobra.Command{
-				Use:   cmdConfigCopy.Usage,
+				Use:   usage,
 				Short: cmdConfigCopy.Description.EN,
 				Long:  cmdConfigCopy.Description.EN,
 				Args: func(cmd *cobra.Command, args []string) error {
@@ -149,47 +164,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 				},
 				RunE: func(cmd *cobra.Command, args []string) error {
 					// Build command summary
-					cmdStr := fmt.Sprintf("%s %s", cmd.Root().Name(), cmd.Name())
-
-					// Add arguments
-					for i, arg := range args {
-						if i < len(cmdConfigCopy.Args) {
-							cmdStr += fmt.Sprintf(" %s=%s", cmdConfigCopy.Args[i].Name, arg)
-						} else {
-							cmdStr += fmt.Sprintf(" %s", arg)
-						}
-					}
-
-					// Validate flag values
-					for _, flag := range cmdConfigCopy.Flags {
-						// Get the flag value
-						flagValue := cmd.Flag(flag.Name)
-						if flagValue != nil && flagValue.Changed {
-							// Validate format for pkg list command
-							if cmd.Name() == "list" && flag.Name == "format" {
-								validFormats := map[string]bool{
-									"json":  true,
-									"yaml":  true,
-									"table": true,
-								}
-								if !validFormats[flagValue.Value.String()] {
-									return fmt.Errorf("invalid format: %s. Valid formats are: json, yaml, table", flagValue.Value.String())
-								}
-							}
-
-							// Validate language for greet command
-							if cmd.Name() == "greet" && flag.Name == "language" {
-								validLanguages := map[string]bool{
-									"it": true,
-									"en": true,
-									"es": true,
-								}
-								if !validLanguages[flagValue.Value.String()] {
-									return fmt.Errorf("invalid language: %s. Valid languages are: it, en, es", flagValue.Value.String())
-								}
-							}
-						}
-					}
+					cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
 
 					// Add flags
 					cmd.Flags().Visit(func(f *pflag.Flag) {
@@ -258,20 +233,6 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 							}
 							if !validFormats[format] {
 								return fmt.Errorf("invalid format: %s. Valid formats are: json, yaml, table", format)
-							}
-							return nil
-						}
-					}
-					if cmd.Name() == "greet" && flagName == "language" {
-						cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-							language, _ := cmd.Flags().GetString("language")
-							validLanguages := map[string]bool{
-								"it": true,
-								"en": true,
-								"es": true,
-							}
-							if !validLanguages[language] {
-								return fmt.Errorf("invalid language: %s. Valid languages are: it, en, es", language)
 							}
 							return nil
 						}

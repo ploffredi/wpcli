@@ -73,15 +73,17 @@ func loadPluginCommands() error {
 	// Create a map of existing command names to avoid duplicates
 	existingCommands := make(map[string]bool)
 	for _, cmd := range rootCmd.Commands() {
-		existingCommands[cmd.Use] = true
+		existingCommands[strings.Fields(cmd.Use)[0]] = true
 	}
 
 	// Add plugin commands to root command
 	for _, cmd := range pluginCommands {
 		// Skip if command already exists
-		if existingCommands[cmd.Use] {
+		cmdName := strings.Fields(cmd.Use)[0]
+		if existingCommands[cmdName] {
 			continue
 		}
+		existingCommands[cmdName] = true
 		rootCmd.AddCommand(cmd)
 	}
 
