@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ploffredi/wpcli/internal/flags"
 	"gopkg.in/yaml.v3"
 )
 
@@ -106,7 +107,7 @@ type PluginCommandConfig struct {
 		Description Description `yaml:"description"`
 		Required    bool        `yaml:"required"`
 	} `yaml:"args"`
-	Flags []Flag `yaml:"flags"`
+	Flags []*flags.Flag `yaml:"flags"`
 }
 
 // PluginYAMLConfig represents the structure of a plugin's YAML configuration file
