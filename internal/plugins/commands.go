@@ -155,75 +155,11 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 				},
 				PreRunE: func(cmd *cobra.Command, args []string) error {
 					// Validate all flags
-					for _, flag := range cmdConfigCopy.Flags {
-						handler, err := GetFlagHandler(flag.Type, &flag)
-						if err != nil {
-							return fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
-						}
-
-						value := ""
-						flagName := strings.TrimPrefix(flag.Name, "--")
-
-						switch flag.Type {
-						case "string", "enum":
-							value, _ = cmd.Flags().GetString(flagName)
-						case "int":
-							intValue, _ := cmd.Flags().GetInt(flagName)
-							value = fmt.Sprintf("%d", intValue)
-						case "bool":
-							boolValue, _ := cmd.Flags().GetBool(flagName)
-							value = fmt.Sprintf("%v", boolValue)
-						}
-
-						// Always validate flags with valid values
-						if len(flag.ValidValues) > 0 {
-							if err := handler.ValidateValue(&flag, value); err != nil {
-								return err
-							}
-						}
-					}
-					return nil
+					return validateFlags(cmd, cmdConfigCopy.Flags)
 				},
 				RunE: func(cmd *cobra.Command, args []string) error {
-					// Validate all flags
-					for _, flag := range cmdConfigCopy.Flags {
-						handler, err := GetFlagHandler(flag.Type, &flag)
-						if err != nil {
-							return fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
-						}
-
-						value := ""
-						flagName := strings.TrimPrefix(flag.Name, "--")
-						switch flag.Type {
-						case "string", "enum":
-							value, _ = cmd.Flags().GetString(flagName)
-						case "int":
-							intValue, _ := cmd.Flags().GetInt(flagName)
-							value = fmt.Sprintf("%d", intValue)
-						case "bool":
-							boolValue, _ := cmd.Flags().GetBool(flagName)
-							value = fmt.Sprintf("%v", boolValue)
-						}
-
-						// Always validate flags with valid values
-						if len(flag.ValidValues) > 0 {
-							if err := handler.ValidateValue(&flag, value); err != nil {
-								return err
-							}
-						}
-					}
-
 					// Build command summary
-					cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
-					// Add flags
-					cmd.Flags().Visit(func(f *pflag.Flag) {
-						if f.Value.Type() == "bool" {
-							cmdStr += fmt.Sprintf(" --%s", f.Name)
-						} else {
-							cmdStr += fmt.Sprintf(" --%s=%s", f.Name, f.Value.String())
-						}
-					})
-
+					cmdStr := buildCommandSummary(cmdName, args, cmd)
 					fmt.Printf("Executing: %s\n", cmdStr)
 					return nil
 				},
@@ -294,4 +230,39 @@ func init() {
 		// This will be called after all flags are parsed
 		// We can check if the command is valid here
 	})
+}
+
+// validateFlags validates all flags for a command
+func validateFlags(cmd *cobra.Command, flags []Flag) error {
+	for _, flag := range flags {
+		handler, err := GetFlagHandler(flag.Type, &flag)
+		if err != nil {
+			return fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
+		}
+
+		flagName := strings.TrimPrefix(flag.Name, "--")
+		value, err := handler.GetValue(cmd, flagName)
+		if err != nil {
+			return fmt.Errorf("failed to get value for flag %s: %w", flag.Name, err)
+		}
+
+		if err := handler.ValidateValue(&flag, value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// buildCommandSummary builds a string representation of the command with its arguments and flags
+func buildCommandSummary(cmdName string, args []string, cmd *cobra.Command) string {
+	cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
+	// Add flags
+	cmd.Flags().Visit(func(f *pflag.Flag) {
+		if f.Value.Type() == "bool" {
+			cmdStr += fmt.Sprintf(" --%s", f.Name)
+		} else {
+			cmdStr += fmt.Sprintf(" --%s=%s", f.Name, f.Value.String())
+		}
+	})
+	return cmdStr
 }

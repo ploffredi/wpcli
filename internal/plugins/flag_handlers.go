@@ -13,6 +13,8 @@ type FlagHandler interface {
 	AddFlag(cmd *cobra.Command, flag *Flag) error
 	// ValidateValue validates the flag value
 	ValidateValue(flag *Flag, value string) error
+	// GetValue gets the flag value from the command
+	GetValue(cmd *cobra.Command, flagName string) (string, error)
 }
 
 // Flag represents a command flag with its configuration
@@ -83,6 +85,11 @@ func (h *StringFlagHandler) ValidateValue(flag *Flag, value string) error {
 	return nil
 }
 
+func (h *StringFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string, error) {
+	value, _ := cmd.Flags().GetString(flagName)
+	return value, nil
+}
+
 // BoolFlagHandler handles boolean flags
 type BoolFlagHandler struct{}
 
@@ -134,6 +141,11 @@ func (h *BoolFlagHandler) ValidateValue(flag *Flag, value string) error {
 		}
 	}
 	return nil
+}
+
+func (h *BoolFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string, error) {
+	value, _ := cmd.Flags().GetBool(flagName)
+	return fmt.Sprintf("%v", value), nil
 }
 
 // IntFlagHandler handles integer flags
@@ -204,6 +216,11 @@ func (h *IntFlagHandler) ValidateValue(flag *Flag, value string) error {
 	return nil
 }
 
+func (h *IntFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string, error) {
+	value, _ := cmd.Flags().GetInt(flagName)
+	return fmt.Sprintf("%d", value), nil
+}
+
 // EnumFlagHandler handles enum flags (flags with valid_values)
 type EnumFlagHandler struct{}
 
@@ -244,6 +261,34 @@ func (h *EnumFlagHandler) ValidateValue(flag *Flag, value string) error {
 	}
 
 	// Always validate against valid values for enum flags
+	validValuesMap := make(map[string]bool)
+	for _, v := range flag.ValidValues {
+		validValuesMap[v] = true
+	}
+
+	if !validValuesMap[value] {
+		return fmt.Errorf("invalid value for flag %s: %s. Valid values are: %s",
+			flag.Name, value, strings.Join(flag.ValidValues, ", "))
+	}
+	return nil
+}
+
+func (h *EnumFlagHandler) GetValue(cmd *cobra.Command, flagName string) (string, error) {
+	value, _ := cmd.Flags().GetString(flagName)
+	return value, nil
+}
+
+// validateFlagValue validates a flag value against its valid values
+func validateFlagValue(flag *Flag, value string) error {
+	if len(flag.ValidValues) == 0 {
+		return nil
+	}
+
+	// If value is empty and there's a default value, use that for validation
+	if value == "" && flag.Default != "" {
+		value = flag.Default
+	}
+
 	validValuesMap := make(map[string]bool)
 	for _, v := range flag.ValidValues {
 		validValuesMap[v] = true
