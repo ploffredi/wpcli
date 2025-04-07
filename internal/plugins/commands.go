@@ -44,19 +44,7 @@ type PluginCommandConfig struct {
 		} `yaml:"description"`
 		Required bool `yaml:"required"`
 	} `yaml:"args"`
-	Flags []struct {
-		Name        string `yaml:"name"`
-		Shorthand   string `yaml:"shorthand"`
-		Type        string `yaml:"type"`
-		Description struct {
-			IT string `yaml:"it"`
-			EN string `yaml:"en"`
-			ES string `yaml:"es"`
-		} `yaml:"description"`
-		Required    bool     `yaml:"required"`
-		Default     string   `yaml:"default,omitempty"`
-		ValidValues []string `yaml:"valid_values,omitempty"`
-	} `yaml:"flags"`
+	Flags []Flag `yaml:"flags"`
 }
 
 // PluginYAMLConfig represents the structure of a plugin's YAML configuration file
@@ -68,7 +56,8 @@ type PluginYAMLConfig struct {
 		EN string `yaml:"en"`
 		ES string `yaml:"es"`
 	} `yaml:"description"`
-	Commands []PluginCommandConfig `yaml:"commands"`
+	Commands []PluginCommandConfig  `yaml:"commands"`
+	Metadata map[string]interface{} `yaml:"metadata,omitempty"` // For plugin-specific data
 }
 
 // GetPluginCommands returns a list of commands available from the plugins
@@ -158,15 +147,74 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 				Short: cmdConfigCopy.Description.EN,
 				Long:  cmdConfigCopy.Description.EN,
 				Args: func(cmd *cobra.Command, args []string) error {
+					// Validate arguments
 					if len(args) < requiredArgs {
 						return fmt.Errorf("requires at least %d argument(s)", requiredArgs)
 					}
 					return nil
 				},
+				PreRunE: func(cmd *cobra.Command, args []string) error {
+					// Validate all flags
+					for _, flag := range cmdConfigCopy.Flags {
+						handler, err := GetFlagHandler(flag.Type, &flag)
+						if err != nil {
+							return fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
+						}
+
+						value := ""
+						flagName := strings.TrimPrefix(flag.Name, "--")
+
+						switch flag.Type {
+						case "string", "enum":
+							value, _ = cmd.Flags().GetString(flagName)
+						case "int":
+							intValue, _ := cmd.Flags().GetInt(flagName)
+							value = fmt.Sprintf("%d", intValue)
+						case "bool":
+							boolValue, _ := cmd.Flags().GetBool(flagName)
+							value = fmt.Sprintf("%v", boolValue)
+						}
+
+						// Always validate flags with valid values
+						if len(flag.ValidValues) > 0 {
+							if err := handler.ValidateValue(&flag, value); err != nil {
+								return err
+							}
+						}
+					}
+					return nil
+				},
 				RunE: func(cmd *cobra.Command, args []string) error {
+					// Validate all flags
+					for _, flag := range cmdConfigCopy.Flags {
+						handler, err := GetFlagHandler(flag.Type, &flag)
+						if err != nil {
+							return fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
+						}
+
+						value := ""
+						flagName := strings.TrimPrefix(flag.Name, "--")
+						switch flag.Type {
+						case "string", "enum":
+							value, _ = cmd.Flags().GetString(flagName)
+						case "int":
+							intValue, _ := cmd.Flags().GetInt(flagName)
+							value = fmt.Sprintf("%d", intValue)
+						case "bool":
+							boolValue, _ := cmd.Flags().GetBool(flagName)
+							value = fmt.Sprintf("%v", boolValue)
+						}
+
+						// Always validate flags with valid values
+						if len(flag.ValidValues) > 0 {
+							if err := handler.ValidateValue(&flag, value); err != nil {
+								return err
+							}
+						}
+					}
+
 					// Build command summary
 					cmdStr := fmt.Sprintf("%s %s", cmdName, strings.Join(args, " "))
-
 					// Add flags
 					cmd.Flags().Visit(func(f *pflag.Flag) {
 						if f.Value.Type() == "bool" {
@@ -198,71 +246,13 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 
 			// Add flags
 			for _, flag := range cmdConfigCopy.Flags {
-				flagName := flag.Name
-				if len(flagName) > 2 && flagName[:2] == "--" {
-					flagName = flagName[2:]
+				handler, err := GetFlagHandler(flag.Type, &flag)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get flag handler for %s: %w", flag.Name, err)
 				}
 
-				shorthand := ""
-				if flag.Shorthand != "" {
-					shorthand = flag.Shorthand
-					if len(shorthand) > 1 && shorthand[0] == '-' {
-						shorthand = shorthand[1:]
-					}
-				}
-
-				switch flag.Type {
-				case "string":
-					var defaultValue string
-					if flag.Default != "" {
-						defaultValue = flag.Default
-					}
-					if shorthand != "" {
-						cmd.Flags().StringP(flagName, shorthand, defaultValue, flag.Description.EN)
-					} else {
-						cmd.Flags().String(flagName, defaultValue, flag.Description.EN)
-					}
-
-					// Add validation for flags with valid_values
-					if len(flag.ValidValues) > 0 {
-						// Get the existing PreRunE function if it exists
-						existingPreRunE := cmd.PreRunE
-
-						// Create a map of valid values for quick lookup
-						validValuesMap := make(map[string]bool)
-						for _, value := range flag.ValidValues {
-							validValuesMap[value] = true
-						}
-
-						cmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-							// Call the existing PreRunE function if it exists
-							if existingPreRunE != nil {
-								if err := existingPreRunE(cmd, args); err != nil {
-									return err
-								}
-							}
-
-							// Validate the flag value
-							value, _ := cmd.Flags().GetString(flagName)
-							if !validValuesMap[value] {
-								return fmt.Errorf("invalid %s: %s. Valid values are: %s",
-									flagName, value, strings.Join(flag.ValidValues, ", "))
-							}
-							return nil
-						}
-					}
-				case "bool":
-					defaultValue := flag.Default == "true"
-					if shorthand != "" {
-						cmd.Flags().BoolP(flagName, shorthand, defaultValue, flag.Description.EN)
-					} else {
-						cmd.Flags().Bool(flagName, defaultValue, flag.Description.EN)
-					}
-				}
-				if flag.Required {
-					if err := cmd.MarkFlagRequired(flagName); err != nil {
-						return nil, fmt.Errorf("failed to mark flag %s as required: %w", flagName, err)
-					}
+				if err := handler.AddFlag(cmd, &flag); err != nil {
+					return nil, fmt.Errorf("failed to add flag %s: %w", flag.Name, err)
 				}
 			}
 

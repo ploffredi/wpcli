@@ -92,11 +92,8 @@ func loadPluginCommands() error {
 
 func Execute() error {
 	if err := rootCmd.Execute(); err != nil {
-		if strings.Contains(err.Error(), "unknown command") {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Fprintf(os.Stderr, "%v\n", err)
+		// Print the error message and exit with code 1 for any error
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 	return nil
