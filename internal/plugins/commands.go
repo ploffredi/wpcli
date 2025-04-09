@@ -92,10 +92,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 			usage := cmdConfigCopy.Usage
 			usage = strings.TrimPrefix(usage, "wpcli ")
 
-			description := cmdConfigCopy.Description["en"]
-			if description == "" {
-				description = cmdConfigCopy.Description["default"]
-			}
+			description := cmdConfigCopy.Description
 
 			cmd := &cobra.Command{
 				Use:   usage,
@@ -166,10 +163,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 			// Add arguments
 			for _, arg := range cmdConfigCopy.Args {
 				cmd.Use = strings.ReplaceAll(cmd.Use, "<"+arg.Name+">", fmt.Sprintf("<%s>", arg.Name))
-				argDesc := arg.Description["en"]
-				if argDesc == "" {
-					argDesc = arg.Description["default"]
-				}
+				argDesc := arg.Description
 				cmd.Long = fmt.Sprintf("%s\n\nArguments:\n  %s (%s) - %s", cmd.Long, arg.Name, arg.Type, argDesc)
 			}
 

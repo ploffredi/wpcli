@@ -22,10 +22,10 @@ type Flag struct {
 	Name        string
 	Shorthand   string
 	Type        FlagType
-	Description map[string]string `yaml:"description"`
-	Required    bool              `yaml:"required"`
-	Default     string            `yaml:"default,omitempty"`
-	ValidValues []string          `yaml:"valid_values,omitempty"`
+	Description string   `yaml:"description"`
+	Required    bool     `yaml:"required"`
+	Default     string   `yaml:"default,omitempty"`
+	ValidValues []string `yaml:"valid_values,omitempty"`
 }
 
 // FlagHandler defines the interface for handling different flag types
@@ -42,7 +42,7 @@ type FlagValue struct {
 }
 
 // NewFlag creates a new Flag with the given configuration
-func NewFlag(name, shorthand string, flagType FlagType, description map[string]string, required bool, defaultValue string, validValues []string) *Flag {
+func NewFlag(name, shorthand string, flagType FlagType, description string, required bool, defaultValue string, validValues []string) *Flag {
 	return &Flag{
 		Name:        name,
 		Shorthand:   shorthand,
@@ -65,11 +65,8 @@ func NormalizeShorthand(shorthand string) string {
 }
 
 // GetDescription returns the description in the given language, falling back to "default" if not found
-func (f *Flag) GetDescription(lang string) string {
-	if desc, ok := f.Description[lang]; ok {
-		return desc
-	}
-	return f.Description["default"]
+func (f *Flag) GetDescription(language string) string {
+	return f.Description
 }
 
 // Validate checks if the flag configuration is valid

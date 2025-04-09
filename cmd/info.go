@@ -50,9 +50,7 @@ var infoCmd = &cobra.Command{
 		fmt.Printf("Plugin Information for: %s\n", plugin.Name)
 		fmt.Println("-----------------")
 		fmt.Println("Description:")
-		fmt.Printf("  English: %s\n", plugin.Description["en"])
-		fmt.Printf("  Italian: %s\n", plugin.Description["it"])
-		fmt.Printf("  Spanish: %s\n", plugin.Description["es"])
+		fmt.Printf("  English: %s\n", plugin.Description)
 		fmt.Printf("UUID: %s\n", plugin.UUID)
 		fmt.Println("\nVersions:")
 		for _, version := range plugin.Versions {

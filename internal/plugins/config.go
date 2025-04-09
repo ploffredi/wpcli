@@ -9,9 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Description represents a multilingual description using a map of language codes to strings
-type Description map[string]string
-
 type Version struct {
 	Version string `yaml:"version"`
 	Wasm    string `yaml:"wasm"`
@@ -20,7 +17,7 @@ type Version struct {
 
 type Plugin struct {
 	Name        string                 `yaml:"name"`
-	Description Description            `yaml:"description"`
+	Description string                 `yaml:"description"`
 	UUID        string                 `yaml:"uuid"`
 	Versions    []Version              `yaml:"versions"`
 	Subcommand  string                 `yaml:"subcommand,omitempty"`
@@ -98,17 +95,18 @@ func (cm *ConfigManager) GetSettings() *Settings {
 
 // PluginCommandConfig represents the configuration for a plugin command
 type PluginCommandConfig struct {
-	Name        string      `yaml:"name"`
-	Description Description `yaml:"description"`
-	Usage       string      `yaml:"usage"`
+	Name        string `yaml:"name"`
+	Description string `yaml:"description"`
+	Usage       string `yaml:"usage"`
 	Examples    []struct {
-		Command string `yaml:"command"`
+		Description string `yaml:"description"`
+		Command     string `yaml:"command"`
 	} `yaml:"examples"`
 	Args []struct {
-		Name        string      `yaml:"name"`
-		Type        string      `yaml:"type"`
-		Description Description `yaml:"description"`
-		Required    bool        `yaml:"required"`
+		Name        string `yaml:"name"`
+		Type        string `yaml:"type"`
+		Description string `yaml:"description"`
+		Required    bool   `yaml:"required"`
 	} `yaml:"args"`
 	Flags []*flags.Flag `yaml:"flags"`
 	// Additional fields from PluginCommand
