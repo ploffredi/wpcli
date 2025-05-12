@@ -56,7 +56,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 			} else {
 				parentCmd = &cobra.Command{
 					Use:   plugin.Subcommand,
-					Short: fmt.Sprintf("Commands for %s plugins (from %s v%s)", plugin.Subcommand, plugin.Name, latestVersion.Version),
+					Short: fmt.Sprintf("Commands for %s plugins (%s v%s)", plugin.Subcommand, plugin.Name, latestVersion.Version),
 					Long:  fmt.Sprintf("Commands for %s plugins\n\nVersion: %s\n\nPlugin: %s", plugin.Subcommand, latestVersion.Version, plugin.Name),
 				}
 				subcommandGroups[plugin.Subcommand] = parentCmd
@@ -96,7 +96,7 @@ func GetPluginCommands(configPath string) ([]*cobra.Command, error) {
 
 			cmd := &cobra.Command{
 				Use:   usage,
-				Short: description,
+				Short: fmt.Sprintf("%s (%s v%s)", description, plugin.Name, latestVersion.Version),
 				Long:  description,
 				Args: func(cmd *cobra.Command, args []string) error {
 					// Validate arguments

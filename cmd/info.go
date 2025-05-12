@@ -12,8 +12,8 @@ import (
 
 var infoCmd = &cobra.Command{
 	Use:   "info [plugin-name]",
-	Short: "Get detailed information about a specific plugin (builtin)",
-	Long:  `Get detailed information about a specific plugin from the wpstore repository (builtin)`,
+	Short: "Get detailed information about a specific plugin",
+	Long:  `Get detailed information about a specific plugin from the wpstore repository`,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		pluginName := args[0]
@@ -55,7 +55,6 @@ var infoCmd = &cobra.Command{
 		fmt.Println("\nVersions:")
 		for _, version := range plugin.Versions {
 			fmt.Printf("  Version: %s\n", version.Version)
-			fmt.Printf("    WASM: %s\n", version.Wasm)
 			fmt.Printf("    Config: %s\n", version.Conf)
 		}
 

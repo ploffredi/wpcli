@@ -11,7 +11,6 @@ import (
 
 type Version struct {
 	Version string `yaml:"version"`
-	Wasm    string `yaml:"wasm"`
 	Conf    string `yaml:"conf"`
 }
 
@@ -99,8 +98,7 @@ type PluginCommandConfig struct {
 	Description string `yaml:"description"`
 	Usage       string `yaml:"usage"`
 	Examples    []struct {
-		Description string `yaml:"description"`
-		Command     string `yaml:"command"`
+		Command string `yaml:"command"`
 	} `yaml:"examples"`
 	Args []struct {
 		Name        string `yaml:"name"`
@@ -110,7 +108,6 @@ type PluginCommandConfig struct {
 	} `yaml:"args"`
 	Flags []*flags.Flag `yaml:"flags"`
 	// Additional fields from PluginCommand
-	WasmFile   string `yaml:"wasm_file,omitempty"`
 	ConfigFile string `yaml:"config_file,omitempty"`
 	Version    string `yaml:"version,omitempty"`
 	Subcommand string `yaml:"subcommand,omitempty"`

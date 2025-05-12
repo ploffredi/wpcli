@@ -12,8 +12,8 @@ import (
 
 var listCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all available plugins (builtin)",
-	Long:  `List all available plugins from the wpstore repository (builtin)`,
+	Short: "List all available plugins",
+	Long:  `List all available plugins from the wpstore repository`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
